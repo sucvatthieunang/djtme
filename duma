@@ -1,106 +1,84 @@
-                    if UserSettings().GameSettings.SavedQualityLevel.Value == 0 then StarterGui:SetCore("SendNotification", {Title = "Please change quality graphics to manual"})
-                    elseif UserSettings().GameSettings.SavedQualityLevel.Value >= 2 then StarterGui:SetCore("SendNotification", {Title = "Please change quality graphicslevel to 1", Text = "Graphics level: " .. UserSettings().GameSettings.SavedQualityLevel.Value})
-                    end
-                    settings().Network.IncomingReplicationLag = 0
-                    settings().Rendering.ReloadAssets = false
-                    settings().Rendering.EnableFRM = true
-                    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01;
-                    settings().Rendering.EditQualityLevel = Enum.QualityLevel.Level01;
-                    workspace.StreamingEnabled = true;
-                    SoundService.AmbientReverb = Enum.ReverbType.NoReverb;
-                    SoundService.RespectFilteringEnabled = false;
-                    SoundService.DopplerScale = 0;
-                    Lighting.GlobalShadows = false;
-                    Lighting.FogEnd = 9e9;
-                    Lighting.Brightness = 0;
-                    Lighting.ClockTime = 12;
-                    Lighting.ExposureCompensation = 0;
-                    Lighting.EnvironmentDiffuseScale = 0;
-                    Lighting.EnvironmentSpecularScale = 0;
-                    RenderSettings.EagerBulkExecution = false
-                    RenderSettings.QualityLevel = Enum.QualityLevel.Level01
-                    RenderSettings.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
-                    if sethiddenproperty then
-                        pcall(sethiddenproperty, Terrain, "Decoration", false)
-                        pcall(sethiddenproperty, Lighting, "Technology", Enum.Technology.Voxel)
-                    end;
-                    UserSettings():GetService("UserGameSettings").SavedQualityLevel = Enum.SavedQualitySetting.QualityLevel1
-                    workspace.InterpolationThrottling = Enum.InterpolationThrottlingMode.Enabled
-                    workspace.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled
-                    Terrain.WaterWaveSize = 0;
-                    Terrain.WaterWaveSpeed = 0;
-                    Terrain.WaterReflectance = 0;
-                    Terrain.WaterTransparency = 1;
-                    task.defer(function()
-                        for _, v in ipairs(Lighting:GetDescendants()) do
-                            if v:IsA("Atmosphere") then v.Density, v.Glare, v.Haze, v.Offset = 0, 0, 0, 0
-                            elseif v:IsA("SurfaceAppearance") or v:IsA("Halo") or v:IsA("LightEffect") or v:IsA("PostEffect") then v:Destroy()
-                            elseif (v:IsA("ColorCorrectionEffect") or v:IsA("DepthOfFieldEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") or v:IsA("BlurEffect") or v:IsA("VignetteEffect")) then
-                                if v:IsA("Sky") then v.SkyboxBk = ""; v.SkyboxDn = ""; v.SkyboxFt = ""; v.SkyboxLf = ""; v.SkyboxRt = ""; v.SkyboxUp = "" end
-                                v.Enabled = false
-                            end
-                        end
-                    end)
-                    StarterGui:SetCore("SendNotification", {Title = "In Process, Please Wait", Text = "Removing Terrain", Duration = 10})
-                    task.defer(function()
-                        local Boosting = COREGUI:FindFirstChild("Boosting") or Instance.new("Hint", COREGUI)
-                        Boosting.Text = "Scanning terrain: -1/"..-math.huge task.wait(1)
-                        for _ = 1, math.random(3, 7) do
-                            for dots = 1, 3 do
-                                Boosting.Text = "Scanning"..string.rep(".", dots)
-                                task.wait(0.3)
-                            end
-                        end task.wait(1)
-                        local children = game:GetDescendants()
-                        local objectsToProcess = {}
-                        local whitelist = {
-                            metal = {"Part","UnionOperation","MeshPart","CornerWedgePart","TrussPart","BasePart"},
-                            explosion = {"Explosion"},
-                            decal = {"Decal","Texture"},
-                            effect = {"Highlight","Beam","SurfaceLight","SpotLight","PointLight","ParticleEmitter","Sparkles","Smoke","Trail","Fire"},
-                            delete = {"Accessory","Clothing","ShirtGraphic"},
-                            model = {"Model"},
-                            sound = {"Sound"}
-                        }
-                        local classLookup = {}
-                        for i, v in pairs(whitelist) do
-                            for _, vm in ipairs(v) do
-                                classLookup[vm] = i
-                            end
-                        end
-                        for i,v in ipairs(children) do
-                            local typeAction = classLookup[v.ClassName]
-                            if typeAction then
-                                table.insert(objectsToProcess, {obj=v, typeAction=typeAction})
-                            end
-                            Boosting.Text = ("Scanning terrain: %d/%d (%d%%)"):format(i,#children,math.floor(i/#children*100))
-                            if i % math.random(500,2000) == 0 then task.wait(0.05) end
-                        end Boosting.Text = "Scanned: ".. #objectsToProcess.. "Terrain... Boosting" task.wait(3)
-                        for i,e in ipairs(objectsToProcess) do
-                            local v, typeAction = e.obj, e.typeAction
-                            if typeAction=="metal" then
-                                v.Material = Enum.Material.SmoothPlastic
-                                v.Reflectance = 0
-                                v.CastShadow = false
-                                pcall(function() v.TextureID=10385902758728957 end)
-                            elseif typeAction=="explosion" then
-                                v.BlastPressure=1
-                                v.BlastRadius=1
-                            elseif typeAction=="decal" then
-                                v.Transparency=1
-                            elseif typeAction=="effect" then
-                                v.Enabled=false
-                            elseif typeAction=="delete" then
-                                v:Destroy()
-                            elseif typeAction=="model" then
-                                pcall(function() v.LevelOfDetail=Enum.ModelLevelOfDetail.SLIM end)
-                            elseif typeAction=="sound" then
-                                v.Volume=0
-                                v.Playing=false
-                            end
-                            Boosting.Text = ("Optimizing terrain: %d/%d (%d%%)"):format(i,#objectsToProcess,math.floor(i/#objectsToProcess*100))
-                            if i % math.random(500,2000)==0 then task.wait(0.05) end
-                        end
-                        Boosting.Text = "Done! Removed Terrain"
-                        delay(5, function() Boosting:Destroy() end)
-                    end) 
+repeat task.wait() until game:IsLoaded()
+if not game:IsLoaded() then game:IsLoaded():Wait(5) end
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+
+local Initialize = function()
+	UserInputService.WindowFocusReleased:Connect(WindowFocusReleasedFunction)
+	UserInputService.WindowFocused:Connect(WindowFocusedFunction)
+	return
+end
+Initialize()
+UserSettings():GetService("UserGameSettings").MasterVolume = 0
+local decalsyeeted = true
+local g = game
+local w = g.Workspace
+local l = g.Lighting
+local t = w.Terrain
+sethiddenproperty(l,"Technology",2)
+sethiddenproperty(t,"Decoration",false)
+t.WaterWaveSize = 0
+t.WaterWaveSpeed = 0
+t.WaterReflectance = 0
+t.WaterTransparency = 0
+l.GlobalShadows = 0
+l.FogEnd = 9e9
+l.Brightness = 0
+settings().Rendering.QualityLevel = "Level01"
+for i, v in pairs(w:GetDescendants()) do
+    if v:IsA("BasePart") and not v:IsA("MeshPart") then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+    elseif (v:IsA("Decal") or v:IsA("Texture")) and decalsyeeted then
+        v.Transparency = 1
+    elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+        v.Lifetime = NumberRange.new(0)
+    elseif v:IsA("Explosion") then
+        v.BlastPressure = 1
+        v.BlastRadius = 1
+    elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+        v.Enabled = false
+    elseif v:IsA("MeshPart") and decalsyeeted then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+        v.TextureID = 10385902758728957
+    elseif v:IsA("SpecialMesh") and decalsyeeted  then
+        v.TextureId=0
+    elseif v:IsA("ShirtGraphic") and decalsyeeted then
+        v.Graphic=1
+    elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
+        v[v.ClassName.."Template"]=1
+    end
+end
+for i = 1,#l:GetChildren() do
+    e=l:GetChildren()[i]
+    if e:IsA("BlurEffect") or e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") then
+        e.Enabled = false
+    end
+end
+w.DescendantAdded:Connect(function(v)
+   if v:IsA("BasePart") and not v:IsA("MeshPart") then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+    elseif v:IsA("Decal") or v:IsA("Texture") and decalsyeeted then
+        v.Transparency = 1
+    elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+        v.Lifetime = NumberRange.new(0)
+    elseif v:IsA("Explosion") then
+        v.BlastPressure = 1
+        v.BlastRadius = 1
+    elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+        v.Enabled = false
+    elseif v:IsA("MeshPart") and decalsyeeted then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+        v.TextureID = 10385902758728957
+    elseif v:IsA("SpecialMesh") and decalsyeeted then
+        v.TextureId=0
+    elseif v:IsA("ShirtGraphic") and decalsyeeted then
+        v.ShirtGraphic=1
+    elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
+        v[v.ClassName.."Template"]=1
+            end
+        end)
